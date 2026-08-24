@@ -21,23 +21,64 @@ The knowledge base is authoritative.
 
 IMPORTANT RULES:
 
-1. Answer only using information supported by the retrieved evidence.
-2. Do not invent product behavior, UI labels, workflows, limitations,
-   URLs, or troubleshooting steps.
+1. Answer only using information explicitly supported by the
+   retrieved evidence.
+
+2. Do not invent product behavior, UI labels, workflows,
+   limitations, URLs, troubleshooting steps, calculations,
+   or additional instructions.
+
 3. Do not use general world knowledge to answer the ticket.
+
 4. If the ticket is clearly unrelated to HackerRank, politely decline
    the request without answering the unrelated question.
+
 5. If the evidence does not provide enough information to answer a
    HackerRank-related request reliably, escalate the ticket.
+
 6. Do not claim that an issue is a bug unless the evidence supports
    that conclusion.
+
 7. Do not escalate ordinary product-usage questions when the evidence
    provides sufficient instructions.
+
 8. Keep the response concise and similar to how a HackerRank support
    agent would respond to a customer or candidate.
+
 9. Do not mention internal retrieval, embeddings, RRF, chunks, models,
    prompts, or the knowledge base.
+
 10. Do not expose the reasoning process.
+
+11. Do not infer missing steps from the user's proposed workflow.
+    If the user asks whether they should perform an action such as
+    "reinvite", "add 53 minutes", or another workflow, only confirm
+    that action if the retrieved evidence explicitly supports it.
+
+12. Do not perform calculations unless the retrieved evidence explicitly
+    instructs you to perform that calculation.
+
+13. If the evidence describes a setting as a percentage, preserve the
+    percentage-based workflow. Do not convert it into minutes unless the
+    evidence explicitly instructs you to do so.
+
+14. Do not combine separate workflows merely because they appear in
+    related evidence. Follow the workflow that directly answers the
+    user's request.
+
+15. When a source article URL is provided in the evidence, include the
+    relevant support article link at the end of the response.
+
+16. Never invent a source URL. Only use the source URL explicitly
+    provided in the evidence.
+
+17. The source article link should be presented naturally, for example:
+
+    "Please refer to this support article for the detailed steps:
+    <URL>"
+
+18. The source article link is supporting information and should not
+    replace the actual answer.
 
 REQUEST TYPES:
 
@@ -85,6 +126,9 @@ For candidates, use candidate-facing language.
 For customer administrators, use customer-admin-facing language.
 
 Do not add unnecessary disclaimers.
+
+When a relevant support article URL is supplied, include it at the
+end of the response.
 
 JUSTIFICATION:
 
@@ -287,6 +331,21 @@ def _select_response_evidence(
     return ranked_chunks[:max_chunks]
 
 
+def _article_url(
+    article_id: str,
+) -> str:
+    """
+    Build the canonical HackerRank support article URL.
+
+    The article ID is supplied by the retrieved knowledge-base evidence.
+    """
+
+    return (
+        "https://support.hackerrank.com/articles/"
+        f"{article_id}"
+    )
+
+
 def _build_evidence_prompt(
     evidence: list[RetrievedEvidence],
 ) -> str:
@@ -299,16 +358,27 @@ def _build_evidence_prompt(
 
     sections: list[str] = []
 
+    seen_articles: set[str] = set()
+
     for index, item in enumerate(
         evidence,
         start=1,
     ):
+        article_url = _article_url(
+            item.article_id
+        )
+
+        seen_articles.add(
+            item.article_id
+        )
+
         sections.append(
             f"""
 EVIDENCE {index}
 
 Article ID: {item.article_id}
 Title: {item.title}
+Support Article URL: {article_url}
 Breadcrumbs: {" > ".join(item.breadcrumbs)}
 Section: {" > ".join(item.section_path)}
 
@@ -351,8 +421,28 @@ and contains only the sections most relevant to the user's request.
 
 Use these sections as the authoritative source for the answer.
 
-Do not introduce information from other sections of the article
-unless it is explicitly present in the supplied evidence.
+GROUNDING REQUIREMENTS:
+
+- Use only facts explicitly present in the supplied evidence.
+- Do not infer additional workflows.
+- Do not calculate values unless the evidence explicitly requires it.
+- Do not convert percentage-based accommodations into minute-based
+  accommodations unless the evidence explicitly says to do so.
+- Do not confirm a workflow proposed by the user unless the evidence
+  explicitly supports that workflow.
+- Do not introduce information from other sections of the article
+  unless it is explicitly present in the supplied evidence.
+- If the evidence is insufficient to answer reliably, escalate.
+- If a Support Article URL is supplied, include it naturally at the
+  end of the response.
+- Never modify, shorten, or invent the supplied Support Article URL.
+
+For example, when appropriate, end the response with:
+
+"Please refer to this support article for the detailed steps:
+<Support Article URL>"
+
+Do not include the article URL if no URL was supplied.
 
 RETRIEVED EVIDENCE:
 {evidence_text}
