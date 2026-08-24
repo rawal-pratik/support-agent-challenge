@@ -100,6 +100,14 @@ class TicketUnderstanding(BaseModel):
         ),
     )
 
+    needs_support_document: bool = Field(
+        description=(
+            "Whether the final response should include the "
+            "supporting HackerRank support article because the "
+            "request requires concrete procedural steps."
+        ),
+    )
+
     @field_validator(
         "intent",
         "product_area_hint",
@@ -142,6 +150,7 @@ class RetrievedEvidence(BaseModel):
     title: str
     breadcrumbs: list[str]
     source_path: str
+    source_url: str
     section: str
     section_path: list[str]
     text: str

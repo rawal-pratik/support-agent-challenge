@@ -209,6 +209,10 @@ def run_index(
         )
 
         print(
+            f"  URL: {article.source_url}"
+        )
+
+        print(
             f"  Breadcrumbs: {breadcrumb_path}"
         )
 
@@ -343,6 +347,11 @@ def run_search(
         )
 
         print(
+            f"   Source URL: "
+            f"{chunk.source_url}"
+        )
+
+        print(
             f"   Hybrid: "
             f"{result.hybrid_score:.6f}"
         )
@@ -463,6 +472,11 @@ def run_retrieve(
         print(
             f"   Breadcrumbs: "
             f"{' > '.join(evidence.breadcrumbs)}"
+        )
+
+        print(
+            f"   Source URL: "
+            f"{evidence.source_url}"
         )
 
         print(

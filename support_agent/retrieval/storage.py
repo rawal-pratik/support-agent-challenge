@@ -42,6 +42,7 @@ def load_chunks(path: Path) -> list[KnowledgeChunk]:
             title=item["title"],
             breadcrumbs=tuple(item["breadcrumbs"]),
             source_path=item["source_path"],
+            source_url=item.get("source_url", ""),
             section=item["section"],
             section_path=tuple(item["section_path"]),
             text=item["text"],

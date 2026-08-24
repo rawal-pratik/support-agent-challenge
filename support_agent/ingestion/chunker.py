@@ -15,6 +15,7 @@ class KnowledgeChunk:
     title: str
     breadcrumbs: tuple[str, ...]
     source_path: str
+    source_url: str
     section: str
     section_path: tuple[str, ...]
     text: str
@@ -44,6 +45,7 @@ def chunk_article(
     Each chunk retains:
     - article metadata
     - KB breadcrumbs
+    - source URL
     - section name
     - heading hierarchy
     - section text
@@ -78,6 +80,7 @@ def chunk_article(
                 title=article.title,
                 breadcrumbs=article.breadcrumbs,
                 source_path=article.source_path,
+                source_url=article.source_url,
                 section=current_section,
                 section_path=current_section_path,
                 text=text,
@@ -121,6 +124,7 @@ def chunk_article(
                 title=article.title,
                 breadcrumbs=article.breadcrumbs,
                 source_path=article.source_path,
+                source_url=article.source_url,
                 section=article.title,
                 section_path=(article.title,),
                 text=article.text.strip(),

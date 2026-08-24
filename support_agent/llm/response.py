@@ -66,18 +66,26 @@ IMPORTANT RULES:
     related evidence. Follow the workflow that directly answers the
     user's request.
 
-15. When a source article URL is provided in the evidence, include the
-    relevant support article link at the end of the response.
+15. Include a supporting support article link ONLY when
+    needs_support_document is true and a source URL is explicitly
+    supplied in the selected evidence.
 
-16. Never invent a source URL. Only use the source URL explicitly
+16. Never invent a source URL. Only use the exact source URL explicitly
     provided in the evidence.
 
-17. The source article link should be presented naturally, for example:
+17. When a supporting article link is required, present it naturally
+    at the end of the response, for example:
 
     "Please refer to this support article for the detailed steps:
     <URL>"
 
-18. The source article link is supporting information and should not
+18. Do not include a support article link for questions about product
+    behavior, status, duration, best practices, comparisons, outages,
+    or other requests that do not require concrete procedural steps,
+    unless the ticket understanding explicitly says that a supporting
+    document is needed.
+
+19. The supporting article link is additional context and must not
     replace the actual answer.
 
 REQUEST TYPES:
@@ -126,9 +134,6 @@ For candidates, use candidate-facing language.
 For customer administrators, use customer-admin-facing language.
 
 Do not add unnecessary disclaimers.
-
-When a relevant support article URL is supplied, include it at the
-end of the response.
 
 JUSTIFICATION:
 
@@ -331,23 +336,9 @@ def _select_response_evidence(
     return ranked_chunks[:max_chunks]
 
 
-def _article_url(
-    article_id: str,
-) -> str:
-    """
-    Build the canonical HackerRank support article URL.
-
-    The article ID is supplied by the retrieved knowledge-base evidence.
-    """
-
-    return (
-        "https://support.hackerrank.com/articles/"
-        f"{article_id}"
-    )
-
-
 def _build_evidence_prompt(
     evidence: list[RetrievedEvidence],
+    include_source_urls: bool,
 ) -> str:
     """
     Format selected evidence for the response-generation model.
@@ -358,19 +349,16 @@ def _build_evidence_prompt(
 
     sections: list[str] = []
 
-    seen_articles: set[str] = set()
-
     for index, item in enumerate(
         evidence,
         start=1,
     ):
-        article_url = _article_url(
-            item.article_id
-        )
+        source_url_line = ""
 
-        seen_articles.add(
-            item.article_id
-        )
+        if include_source_urls and item.source_url:
+            source_url_line = (
+                f"Support Article URL: {item.source_url}"
+            )
 
         sections.append(
             f"""
@@ -378,7 +366,7 @@ EVIDENCE {index}
 
 Article ID: {item.article_id}
 Title: {item.title}
-Support Article URL: {article_url}
+{source_url_line}
 Breadcrumbs: {" > ".join(item.breadcrumbs)}
 Section: {" > ".join(item.section_path)}
 
@@ -400,7 +388,8 @@ def _build_user_prompt(
     """
 
     evidence_text = _build_evidence_prompt(
-        evidence
+        evidence=evidence,
+        include_source_urls=understanding.needs_support_document,
     )
 
     return f"""
@@ -433,16 +422,15 @@ GROUNDING REQUIREMENTS:
 - Do not introduce information from other sections of the article
   unless it is explicitly present in the supplied evidence.
 - If the evidence is insufficient to answer reliably, escalate.
-- If a Support Article URL is supplied, include it naturally at the
-  end of the response.
-- Never modify, shorten, or invent the supplied Support Article URL.
 
-For example, when appropriate, end the response with:
+SUPPORTING DOCUMENT:
 
-"Please refer to this support article for the detailed steps:
-<Support Article URL>"
-
-Do not include the article URL if no URL was supplied.
+- needs_support_document is:
+  {str(understanding.needs_support_document).lower()}
+- If it is true and a Support Article URL is supplied, include that
+  exact URL naturally at the end of the response.
+- If it is false, do not include a support article URL.
+- Never modify, shorten, or invent a supplied Support Article URL.
 
 RETRIEVED EVIDENCE:
 {evidence_text}

@@ -95,8 +95,6 @@ class QueryAwareRetriever:
 
                 entry["queries"].append(query)
 
-                # Preserve the strongest individual retrieval
-                # result for diagnostic score reporting.
                 if (
                     result.hybrid_score
                     > entry["result"].hybrid_score
@@ -122,6 +120,7 @@ class QueryAwareRetriever:
                     title=chunk.title,
                     breadcrumbs=list(chunk.breadcrumbs),
                     source_path=chunk.source_path,
+                    source_url=chunk.source_url,
                     section=chunk.section,
                     section_path=list(chunk.section_path),
                     text=chunk.text,
@@ -140,7 +139,7 @@ class QueryAwareRetriever:
         self,
         ticket: str,
         *,
-        top_k: int = 8,
+        top_k: int = 5,
         candidate_k: int = 20,
     ) -> QueryAwareRetrieval:
         """
@@ -155,19 +154,12 @@ class QueryAwareRetriever:
             client=self.llm_client,
         )
 
-        # Do not search the HackerRank knowledge base for a
-        # clearly unrelated request.
         if not understanding.is_hackerrank_related:
             return QueryAwareRetrieval(
                 understanding=understanding,
                 evidence=[],
             )
 
-        # Always preserve the original ticket as a retrieval
-        # query. The LLM may rephrase the ticket in a way that
-        # accidentally removes an important detail.
-        #
-        # Deduplicate queries while preserving their order.
         queries: list[str] = []
 
         for query in [

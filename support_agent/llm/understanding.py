@@ -76,8 +76,7 @@ assessment."
 
 Determine the user's underlying intent.
 
-Identify a preliminary product-area hint based only on the
-ticket.
+Identify a preliminary product-area hint based only on the ticket.
 
 The product_area_hint is NOT the final product-area
 classification.
@@ -90,8 +89,7 @@ authoritative for the final product area.
 
 Create a concise issue_summary.
 
-Extract important product terms, features, objects, and
-concepts.
+Extract important product terms, features, objects, and concepts.
 
 Generate 1 to 5 search queries that are useful for searching
 a HackerRank support knowledge base.
@@ -99,18 +97,48 @@ a HackerRank support knowledge base.
 Search queries should use terminology likely to appear in
 support documentation.
 
-Prefer concrete product terminology over conversational
-wording.
+Prefer concrete product terminology over conversational wording.
 
-Generate multiple useful formulations when the original
-ticket uses vague or conversational language.
+Generate multiple useful formulations when the original ticket
+uses vague or conversational language.
 
 Do not invent product features, error messages, or facts that
 are not supported by the ticket.
 
 If the ticket is clearly unrelated to HackerRank support,
-still describe the user's intent accurately, but do not
-invent a HackerRank requester role.
+still describe the user's intent accurately, but do not invent
+a HackerRank requester role.
+
+Determine needs_support_document.
+
+Set needs_support_document to true ONLY when the user is asking
+for concrete procedural instructions that would benefit from
+the supporting HackerRank article being linked.
+
+Typical examples where it should be true:
+
+- "How do I invite a candidate to an AI interview?"
+- "How do I add extra time to a candidate's assessment?"
+- "How do I configure this setting?"
+- "What are the steps to do this?"
+
+Set needs_support_document to false for requests that do not
+primarily require step-by-step instructions, even when they are
+technical or product-related.
+
+Examples where it should be false:
+
+- "How long do tests stay active in the system?"
+- "Site is down and none of the pages are accessible."
+- "What is best practice for creating a new test versus a variant?"
+- "What are the advantages and disadvantages of variants?"
+- General product behavior, policy, availability, status,
+  best-practice, comparison, or explanation questions.
+
+Do not set needs_support_document to true merely because the
+request is technically difficult or mentions a HackerRank
+feature. The deciding factor is whether the user is asking for
+a concrete procedure or steps.
 
 Return ONLY valid JSON matching the requested schema.
 """.strip()
@@ -135,7 +163,8 @@ Return JSON with exactly these fields:
   "product_area_hint": "...",
   "issue_summary": "...",
   "entities": ["..."],
-  "search_queries": ["..."]
+  "search_queries": ["..."],
+  "needs_support_document": true
 }}
 """.strip()
 
